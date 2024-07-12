@@ -1,0 +1,73 @@
+<script runat='server'>
+  Platform.Load("core","1.1");
+  
+/*
+######################################################
+
+1. Create New Field in Cloud Page DE with name -> "UsedInBulkSend" as Boolean type
+2. Change DE Key and Name
+3. Create primary new in Bulk Send DE - a. ContactId and b. Email field
+
+#########################################################
+*/
+
+/* ########################         CloudPage DE      ####################*/  
+  
+var CloudpageDE = "2791AB0F-8A57-4AD5-8E36-BB1EB35CE5B7"; 
+var CloudpageDE_Data = DataExtension.Init(CloudpageDE);
+var Cloudpage_Result = CloudpageDE_Data.Rows.Lookup(["UsedInBulkSend"], ["false"]);  
+
+/* ########################         Internal DE      ####################*/    
+ 
+var internalDE = "5DE6BECB-2D4D-4ADE-9561-283AD7D83676";  
+var internalDE_Data = DataExtension.Init(internalDE);
+var Filter = {Property:"EmailAddress",SimpleOperator:"isNotNull"};
+var internalDE_Result = internalDE_Data.Rows.Retrieve(Filter);  
+  
+  
+if(Cloudpage_Result.length >0)
+{
+for(i=0; i<Cloudpage_Result.length; i++)
+{
+  try
+  {
+  if(internalDE_Result.length >0)
+  {
+  for(j=0; j<internalDE_Result.length; j++)
+  {
+  /* ############################  Insert in Bulk DE     ######################*/
+   var response = Platform.Function.InsertData("PK EV Automation DE",
+         
+                                 ["ContactId","Company Name","Contact Name","Contact Email","Contact Phone", "Parent Org", "Parent Org List","Light Duty Fleet","Medium Duty Fleet","Heavy Duty Fleet",
+                                  "California Percent","Oregon Percent", "Washington Percent", "Nevada Percent", "California fleets truck account", "Truck considering Purchase", "Truck Class", "Purchase Timeframe",
+                                 "Interested Leasing EV", "Applied for Grant", "Interested in EV Hydrogen Fuel Station", "Send Email", "Send FName", "Send LName"],
+                                               [
+                                               Cloudpage_Result[i]['ContactId'], Cloudpage_Result[i]['Company Name'], Cloudpage_Result[i]['Contact Name'],Cloudpage_Result[i]['Contact Email'],
+                                               Cloudpage_Result[i]['Contact Phone'],Cloudpage_Result[i]['Parent Org'],Cloudpage_Result[i]['Parent Org List'],Cloudpage_Result[i]['Light Duty Fleet'],
+                                               Cloudpage_Result[i]['Medium Duty Fleet'], Cloudpage_Result[i]['Heavy Duty Fleet'], Cloudpage_Result[i]['California Percent'],Cloudpage_Result[i]['Oregon Percent'],
+                                               Cloudpage_Result[i]['Washington Percent'],Cloudpage_Result[i]['Nevada Percent'],Cloudpage_Result[i]['California fleets truck account'],
+                                               Cloudpage_Result[i]['Truck considering Purchase'],
+                                               Cloudpage_Result[i]['Truck Class'],Cloudpage_Result[i]['Purchase Timeframe'],Cloudpage_Result[i]['Interested Leasing EV'],Cloudpage_Result[i]['Applied for Grant'],
+                                               Cloudpage_Result[i]['Interested in EV Hydrogen Fuel Station'],
+                                               internalDE_Result[j]['EmailAddress'],internalDE_Result[j]['FirstName'],internalDE_Result[j]['LastName'] 
+                                               ]
+                                              );
+  
+      }
+ 
+  }
+    
+  /* #################### Update In Cloudpage DE    ########################## */
+    
+  var rows = Platform.Function.UpdateData("PK EV Grant Landing Capture DE",["ContactId"],[Cloudpage_Result[i]['ContactId']],["UsedInBulkSend"],["True"]); 
+
+
+  }catch(error) {
+Write('Message: '+ error);
+}
+  
+}
+} 
+  
+ 
+</script>
